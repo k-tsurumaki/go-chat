@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/k-tsurumaki/go-chat/trace"
+	"github.com/stretchr/objx"
 )
 
 const (
@@ -18,7 +19,7 @@ var upgrader = &websocket.Upgrader{
 }
 
 type room struct {
-	forward chan []byte // メッセージを転送するチャネル
+	forward chan *message // メッセージを転送するチャネル
 	join    chan *client
 	leave   chan *client
 	clients map[*client]bool // クライアントのマップ
@@ -35,7 +36,7 @@ func (r *room) run() {
 			delete(r.clients, client)
 			close(client.send)
 		case msg := <-r.forward:
-			r.tracer.Trace("メッセージを受信しました: ", string(msg))
+			r.tracer.Trace("メッセージを受信しました: ", msg.Message)
 			for client := range r.clients {
 				select {
 				case client.send <- msg:
@@ -57,10 +58,17 @@ func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	authCookie, err := req.Cookie("auth")
+	if err != nil {
+		log.Fatal("クッキーの取得に失敗しました:", err)
+		return
+	}
+
 	client := &client{
 		socket: socket,
-		send:   make(chan []byte, messageBufferSize),
+		send:   make(chan *message, messageBufferSize),
 		room:   r,
+		userData: objx.MustFromBase64(authCookie.Value),
 	}
 
 	r.join <- client
@@ -73,7 +81,7 @@ func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 func newRoom() *room {
 	return &room{
-		forward: make(chan []byte),
+		forward: make(chan *message),
 		join:    make(chan *client),
 		leave:   make(chan *client),
 		clients: make(map[*client]bool),
