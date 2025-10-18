@@ -24,6 +24,7 @@ func (c *client) read() {
 			// 受信メッセージに送信時刻とユーザ名を付与
 			msg.When = time.Now()
 			msg.Name = c.userData["name"].(string)
+			msg.AvatarURL, _ = c.room.avatar.GetAvatarURL(c)
 			// ルームに転送（ルーム側で全クライアントへ配信される）
 			c.room.forward <- msg
 		} else {
