@@ -1,11 +1,7 @@
 package main
 
 import (
-	"crypto/md5"
 	"errors"
-	"fmt"
-	"io"
-	"strings"
 )
 
 var ErrNoAvatarURL = errors.New("chat: アバターのURLを取得できません。")
@@ -39,11 +35,9 @@ func (GravatarAvatar) GetAvatarURL(c *client) (string, error) {
 	// Gravatar の URL を生成して返す
 	// - userData に email が文字列で含まれていれば利用する
 	// - なければ ErrNoAvatarURL を返す
-	if url, ok := c.userData["email"]; ok {
-		if emailStr, ok := url.(string); ok {
-			m := md5.New()
-			io.WriteString(m, strings.ToLower(emailStr))
-			return fmt.Sprintf("//www.gravatar.com/avatar/%x", m.Sum(nil)), nil
+	if userid, ok := c.userData["userid"]; ok {
+		if useridStr, ok := userid.(string); ok {
+			return "//www.gravatar.com/avatar/" + useridStr, nil
 		}
 	}
 	return "", ErrNoAvatarURL

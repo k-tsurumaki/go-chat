@@ -81,14 +81,22 @@ func main() {
 	http.HandleFunc("/auth/", loginHandler)
 	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{
-			Name: "auth",
-			Value: "",
-			Path: "/",
+			Name:   "auth",
+			Value:  "",
+			Path:   "/",
 			MaxAge: -1,
 		})
 		w.Header()["Location"] = []string{"/chat"}
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	})
+	http.Handle("/upload", &templateHandler{filename: "upload.html"})
+	http.HandleFunc("/uploader", uploaderHandler)
+	// アップロード済みのアバター画像を配信するためのハンドラ。
+	// - URL の形式: /avatars/<filename>
+	// - 例: GET /avatars/user123.png はワークスペースの ./avatars/user123.png を返す
+	// - 実装: FileServer は与えられたディレクトリをルートとしてファイルを返すため
+	//   StripPrefix で先頭の "/avatars/" を削り、内部的に ./avatars/<filename> を参照するようにしている
+	http.Handle("/avatars/", http.StripPrefix("/avatars/", http.FileServer(http.Dir("./avatars"))))
 	http.Handle("/room", r)
 
 	// チャットルーム開始

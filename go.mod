@@ -8,6 +8,7 @@ require (
 	github.com/stretchr/gomniauth v0.0.0-20170717123514-4b6c822be2eb
 	github.com/stretchr/objx v0.5.2
 	github.com/stretchr/signature v0.0.0-20160104132143-168b2a1e1b56
+	golang.org/x/tools v0.38.0
 )
 
 require (
